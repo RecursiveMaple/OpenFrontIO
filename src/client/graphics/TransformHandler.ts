@@ -1,7 +1,12 @@
 import { EventBus } from "../../core/EventBus";
 import { Cell } from "../../core/game/Game";
 import { GameView } from "../../core/game/GameView";
-import { CenterCameraEvent, DragEvent, ZoomEvent } from "../InputHandler";
+import {
+  CenterCameraEvent,
+  DragEvent,
+  PreciseDragEvent,
+  ZoomEvent,
+} from "../InputHandler";
 import {
   GoToPlayerEvent,
   GoToPositionEvent,
@@ -29,6 +34,7 @@ export class TransformHandler {
   ) {
     this.eventBus.on(ZoomEvent, (e) => this.onZoom(e));
     this.eventBus.on(DragEvent, (e) => this.onMove(e));
+    this.eventBus.on(PreciseDragEvent, (e) => this.onMoveCell(e));
     this.eventBus.on(GoToPlayerEvent, (e) => this.onGoToPlayer(e));
     this.eventBus.on(GoToPositionEvent, (e) => this.onGoToPosition(e));
     this.eventBus.on(GoToUnitEvent, (e) => this.onGoToUnit(e));
@@ -247,6 +253,13 @@ export class TransformHandler {
     this.clearTarget();
     this.offsetX -= event.deltaX / this.scale;
     this.offsetY -= event.deltaY / this.scale;
+    this.changed = true;
+  }
+
+  onMoveCell(event: PreciseDragEvent) {
+    this.clearTarget();
+    this.offsetX -= event.deltaX;
+    this.offsetY -= event.deltaY;
     this.changed = true;
   }
 

@@ -15,6 +15,7 @@ import {
   PlayerID,
   PlayerInfo,
   PlayerProfile,
+  PlayerTiles,
   PlayerType,
 } from "./game/Game";
 import { createGame } from "./game/GameImpl";
@@ -225,7 +226,15 @@ export class GameRunner {
       borderTiles: player.borderTiles(),
     } as PlayerBorderTiles;
   }
-
+  public playerTiles(playerID: PlayerID): PlayerTiles {
+    const player = this.game.player(playerID);
+    if (!player.isPlayer()) {
+      throw new Error(`player with id ${playerID} not found`);
+    }
+    return {
+      tiles: player.tiles(),
+    } as PlayerTiles;
+  }
   public attackAveragePosition(
     playerID: number,
     attackID: string,

@@ -13,6 +13,7 @@ import { ControlPanel } from "./layers/ControlPanel";
 import { EmojiTable } from "./layers/EmojiTable";
 import { EventsDisplay } from "./layers/EventsDisplay";
 import { FxLayer } from "./layers/FxLayer";
+import { IndicatorLayer } from "./layers/IndicatorLayer";
 import { Layer } from "./layers/Layer";
 import { Leaderboard } from "./layers/Leaderboard";
 import { MultiTabModal } from "./layers/MultiTabModal";
@@ -179,6 +180,13 @@ export function createRenderer(
     new FxLayer(game),
     new UILayer(game, eventBus, clientID, transformHandler),
     new NameLayer(game, transformHandler, clientID),
+    new IndicatorLayer(
+      eventBus,
+      game,
+      transformHandler,
+      emojiTable as EmojiTable,
+      uiState,
+    ),
     eventsDisplay,
     chatDisplay,
     buildMenu,

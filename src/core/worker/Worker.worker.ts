@@ -7,6 +7,7 @@ import {
   PlayerActionsResultMessage,
   PlayerBorderTilesResultMessage,
   PlayerProfileResultMessage,
+  PlayerTilesResultMessage,
   TransportShipSpawnResultMessage,
   WorkerMessage,
 } from "./WorkerMessages";
@@ -117,6 +118,23 @@ ctx.addEventListener("message", async (e: MessageEvent<MainThreadMessage>) => {
           id: message.id,
           result: borderTiles,
         } as PlayerBorderTilesResultMessage);
+      } catch (error) {
+        console.error("Failed to get border tiles:", error);
+        throw error;
+      }
+      break;
+    case "player_tiles":
+      if (!gameRunner) {
+        throw new Error("Game runner not initialized");
+      }
+
+      try {
+        const tiles = (await gameRunner).playerTiles(message.playerID);
+        sendMessage({
+          type: "player_tiles_result",
+          id: message.id,
+          result: tiles,
+        } as PlayerTilesResultMessage);
       } catch (error) {
         console.error("Failed to get border tiles:", error);
         throw error;

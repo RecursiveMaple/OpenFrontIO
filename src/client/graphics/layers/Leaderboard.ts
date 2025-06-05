@@ -3,6 +3,7 @@ import { customElement, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { translateText } from "../../../client/Utils";
 import { EventBus, GameEvent } from "../../../core/EventBus";
+import { UnitType } from "../../../core/game/Game";
 import { GameView, PlayerView, UnitView } from "../../../core/game/GameView";
 import { ClientID } from "../../../core/Schemas";
 import { renderNumber } from "../../Utils";
@@ -13,7 +14,10 @@ interface Entry {
   position: number;
   score: string;
   gold: string;
+  deltaGold: string;
   troops: string;
+  citys: string;
+  ports: string;
   isMyPlayer: boolean;
   player: PlayerView;
 }
@@ -40,11 +44,15 @@ export class Leaderboard extends LitElement implements Layer {
   public eventBus: EventBus | null = null;
 
   players: Entry[] = [];
+  private playerGoldHistory: Map<number, bigint[]> = new Map();
+  private maxHistoryLength = 10;
+  private playerDeltaGold: Map<number, number> = new Map();
 
   @state()
   private _leaderboardHidden = true;
   private _shownOnInit = false;
   private showTopFive = true;
+  private sortBy: string = "Owned";
 
   init() {}
 
@@ -60,6 +68,34 @@ export class Leaderboard extends LitElement implements Layer {
     }
 
     if (this.game.ticks() % 10 === 0) {
+      const sorted = this.game
+        .playerViews()
+        .filter((player) => player.isAlive());
+
+      sorted.forEach((player) => {
+        const currentGold = player.gold();
+        const smallID = player.smallID();
+
+        if (!this.playerGoldHistory.has(smallID)) {
+          this.playerGoldHistory.set(smallID, [currentGold]);
+          this.playerDeltaGold.set(smallID, 0);
+        } else {
+          const history = this.playerGoldHistory.get(smallID)!;
+          if (history.length >= this.maxHistoryLength) {
+            history.shift();
+          }
+          history.push(currentGold);
+
+          let deltaGold = 0;
+          if (history.length > 1) {
+            deltaGold =
+              Number(history[history.length - 1] - history[0]) /
+              (history.length - 1);
+          }
+          this.playerDeltaGold.set(smallID, deltaGold);
+        }
+      });
+
       this.updateLeaderboard();
     }
   }
@@ -73,9 +109,37 @@ export class Leaderboard extends LitElement implements Layer {
       this.game.playerViews().find((p) => p.clientID() === this.clientID) ??
       null;
 
-    const sorted = this.game
-      .playerViews()
-      .sort((a, b) => b.numTilesOwned() - a.numTilesOwned());
+    const sorted = this.game.playerViews().filter((player) => player.isAlive());
+    switch (this.sortBy) {
+      case "Owned":
+        sorted.sort((a, b) => b.numTilesOwned() - a.numTilesOwned());
+        break;
+      case "Gold":
+        sorted.sort((a, b) => Number(b.gold() - a.gold()));
+        break;
+      case "ΔG":
+        sorted.sort((a, b) => {
+          const aDeltaGold = this.playerDeltaGold.get(a.smallID()) || 0;
+          const bDeltaGold = this.playerDeltaGold.get(b.smallID()) || 0;
+          return bDeltaGold - aDeltaGold;
+        });
+        break;
+      case "Troops":
+        sorted.sort((a, b) => b.troops() - a.troops());
+        break;
+      case "Citys":
+        sorted.sort(
+          (a, b) =>
+            b.units(UnitType.City).length - a.units(UnitType.City).length,
+        );
+        break;
+      case "Ports":
+        sorted.sort(
+          (a, b) =>
+            b.units(UnitType.Port).length - a.units(UnitType.Port).length,
+        );
+        break;
+    }
 
     const numTilesWithoutFallout =
       this.game.numLandTiles() - this.game.numTilesWithFallout();
@@ -83,10 +147,12 @@ export class Leaderboard extends LitElement implements Layer {
     const playersToShow = this.showTopFive ? sorted.slice(0, 5) : sorted;
 
     this.players = playersToShow.map((player, index) => {
-      let troops = player.troops() / 10;
-      if (!player.isAlive()) {
-        troops = 0;
-      }
+      const troops = player.troops() / 10;
+      const citys = player.units(UnitType.City).length;
+      const ports = player.units(UnitType.Port).length;
+
+      const deltaGold = this.playerDeltaGold.get(player.smallID()) || 0;
+
       return {
         name: player.displayName(),
         position: index + 1,
@@ -94,7 +160,10 @@ export class Leaderboard extends LitElement implements Layer {
           player.numTilesOwned() / numTilesWithoutFallout,
         ),
         gold: renderNumber(player.gold()),
+        deltaGold: renderNumber(deltaGold),
         troops: renderNumber(troops),
+        citys: renderNumber(citys),
+        ports: renderNumber(ports),
         isMyPlayer: player === myPlayer,
         player: player,
       };
@@ -102,7 +171,8 @@ export class Leaderboard extends LitElement implements Layer {
 
     if (
       myPlayer !== null &&
-      this.players.find((p) => p.isMyPlayer) === undefined
+      this.players.find((p) => p.isMyPlayer) === undefined &&
+      myPlayer.isAlive()
     ) {
       let place = 0;
       for (const p of sorted) {
@@ -112,10 +182,11 @@ export class Leaderboard extends LitElement implements Layer {
         }
       }
 
-      let myPlayerTroops = myPlayer.troops() / 10;
-      if (!myPlayer.isAlive()) {
-        myPlayerTroops = 0;
-      }
+      const deltaGold = this.playerDeltaGold.get(myPlayer.smallID()) || 0;
+
+      const myPlayerTroops = myPlayer.troops() / 10;
+      const citys = myPlayer.units(UnitType.City).length;
+      const ports = myPlayer.units(UnitType.Port).length;
       this.players.pop();
       this.players.push({
         name: myPlayer.displayName(),
@@ -124,7 +195,10 @@ export class Leaderboard extends LitElement implements Layer {
           myPlayer.numTilesOwned() / this.game.numLandTiles(),
         ),
         gold: renderNumber(myPlayer.gold()),
+        deltaGold: renderNumber(deltaGold),
         troops: renderNumber(myPlayerTroops),
+        citys: renderNumber(citys),
+        ports: renderNumber(ports),
         isMyPlayer: true,
         player: myPlayer,
       });
@@ -138,6 +212,21 @@ export class Leaderboard extends LitElement implements Layer {
     this.eventBus.emit(new GoToPlayerEvent(player));
   }
 
+  private handleHeaderClick(column: string) {
+    if (
+      column === "Rank" ||
+      column === "Player" ||
+      column === "Owned" ||
+      this.sortBy === column
+    ) {
+      this.sortBy = "Owned";
+    } else {
+      this.sortBy = column;
+    }
+
+    this.updateLeaderboard();
+  }
+
   renderLayer(context: CanvasRenderingContext2D) {}
   shouldTransform(): boolean {
     return false;
@@ -148,7 +237,7 @@ export class Leaderboard extends LitElement implements Layer {
       display: block;
     }
     img.emoji {
-      height: 1em;
+      height: 0.8em;
       width: auto;
     }
     .leaderboard {
@@ -161,8 +250,7 @@ export class Leaderboard extends LitElement implements Layer {
       padding-top: 0px;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
       border-radius: 10px;
-      max-width: 500px;
-      max-height: 30vh;
+      max-height: 40vh;
       overflow-y: auto;
       width: 400px;
       backdrop-filter: blur(5px);
@@ -173,7 +261,7 @@ export class Leaderboard extends LitElement implements Layer {
     }
     th,
     td {
-      padding: 5px;
+      padding: 4px;
       text-align: center;
       border-bottom: 1px solid rgba(51, 51, 51, 0.2);
       color: white;
@@ -181,13 +269,18 @@ export class Leaderboard extends LitElement implements Layer {
     th {
       background-color: rgb(31 41 55 / 0.5);
       color: white;
+      font-size: 0.8em;
+      cursor: pointer;
+    }
+    .sorted-header {
+      color: #53ac75 !important;
     }
     .myPlayer {
       font-weight: bold;
-      font-size: 1.2em;
+      font-size: 0.8em;
     }
     .otherPlayer {
-      font-size: 1em;
+      font-size: 0.8em;
     }
     tr:nth-child(even) {
       background-color: rgb(31 41 55 / 0.5);
@@ -280,11 +373,45 @@ export class Leaderboard extends LitElement implements Layer {
         <table>
           <thead>
             <tr>
-              <th>${translateText("leaderboard.rank")}</th>
-              <th>${translateText("leaderboard.player")}</th>
-              <th>${translateText("leaderboard.owned")}</th>
-              <th>${translateText("leaderboard.gold")}</th>
-              <th>${translateText("leaderboard.troops")}</th>
+              <th @click=${() => this.handleHeaderClick("Rank")}>
+                ${translateText("leaderboard.rank")}
+              </th>
+              <th @click=${() => this.handleHeaderClick("Player")}>
+                ${translateText("leaderboard.player")}
+              </th>
+              <th @click=${() => this.handleHeaderClick("Owned")}>
+                ${translateText("leaderboard.owned")}
+              </th>
+              <th
+                @click=${() => this.handleHeaderClick("Gold")}
+                class="${this.sortBy === "Gold" ? "sorted-header" : ""}"
+              >
+                ${translateText("leaderboard.gold")}
+              </th>
+              <th
+                @click=${() => this.handleHeaderClick("ΔG")}
+                class="${this.sortBy === "ΔG" ? "sorted-header" : ""}"
+              >
+                ΔG
+              </th>
+              <th
+                @click=${() => this.handleHeaderClick("Troops")}
+                class="${this.sortBy === "Troops" ? "sorted-header" : ""}"
+              >
+                ${translateText("leaderboard.troops")}
+              </th>
+              <th
+                @click=${() => this.handleHeaderClick("Citys")}
+                class="${this.sortBy === "Citys" ? "sorted-header" : ""}"
+              >
+                Citys
+              </th>
+              <th
+                @click=${() => this.handleHeaderClick("Ports")}
+                class="${this.sortBy === "Ports" ? "sorted-header" : ""}"
+              >
+                Ports
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -298,7 +425,10 @@ export class Leaderboard extends LitElement implements Layer {
                   <td class="player-name">${unsafeHTML(player.name)}</td>
                   <td>${player.score}</td>
                   <td>${player.gold}</td>
+                  <td>${player.deltaGold}</td>
                   <td>${player.troops}</td>
+                  <td>${player.citys}</td>
+                  <td>${player.ports}</td>
                 </tr>
               `,
             )}

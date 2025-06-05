@@ -631,6 +631,10 @@ export interface PlayerBorderTiles {
   borderTiles: ReadonlySet<TileRef>;
 }
 
+export interface PlayerTiles {
+  tiles: ReadonlySet<TileRef>;
+}
+
 export interface PlayerInteraction {
   sharedBorder: boolean;
   canSendEmoji: boolean;

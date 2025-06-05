@@ -84,6 +84,50 @@ export class CenterCameraEvent implements GameEvent {
   constructor() {}
 }
 
+export class PreciseDragEvent implements GameEvent {
+  constructor(
+    public readonly deltaX: number,
+    public readonly deltaY: number,
+  ) {}
+}
+
+export class QuickActionModeEvent implements GameEvent {
+  constructor(public readonly mode: QuickActionMode | null) {}
+}
+
+export class QAMouseUpEvent implements GameEvent {
+  constructor(
+    public readonly x: number,
+    public readonly y: number,
+  ) {}
+}
+
+export class QAMouse2UpEvent implements GameEvent {
+  constructor(
+    public readonly x: number,
+    public readonly y: number,
+  ) {}
+}
+
+export enum QuickActionMode {
+  BoatAttack,
+  SendAlliance,
+  BreakAlliance,
+  DonateTroops,
+  DonateMoney,
+  Target,
+  SendEmoji,
+  BuildAtomBomb,
+  BuildMIRV,
+  BuildHydrogenBomb,
+  BuildWarship,
+  BuildPort,
+  BuildMissileSilo,
+  BuildSAMLauncher,
+  BuildDefensePost,
+  BuildCity,
+}
+
 export class InputHandler {
   private lastPointerX: number = 0;
   private lastPointerY: number = 0;
@@ -97,13 +141,31 @@ export class InputHandler {
 
   private pointerDown: boolean = false;
 
+  private quickActionMode: QuickActionMode | null = null;
+
   private alternateView = false;
 
   private moveInterval: NodeJS.Timeout | null = null;
   private activeKeys = new Set<string>();
 
-  private readonly PAN_SPEED = 5;
-  private readonly ZOOM_SPEED = 10;
+  private readonly keyToActionModeMap = new Map<string, QuickActionMode>([
+    ["KeyB", QuickActionMode.BoatAttack],
+    ["Equal", QuickActionMode.SendAlliance],
+    ["Minus", QuickActionMode.BreakAlliance],
+    ["KeyM", QuickActionMode.DonateMoney],
+    ["KeyT", QuickActionMode.DonateTroops],
+    ["KeyO", QuickActionMode.Target],
+    ["KeyE", QuickActionMode.SendEmoji],
+    ["KeyA", QuickActionMode.BuildAtomBomb],
+    ["KeyV", QuickActionMode.BuildMIRV],
+    ["KeyH", QuickActionMode.BuildHydrogenBomb],
+    ["KeyW", QuickActionMode.BuildWarship],
+    ["KeyP", QuickActionMode.BuildPort],
+    ["KeyS", QuickActionMode.BuildMissileSilo],
+    ["KeyL", QuickActionMode.BuildSAMLauncher],
+    ["KeyD", QuickActionMode.BuildDefensePost],
+    ["KeyC", QuickActionMode.BuildCity],
+  ]);
 
   private userSettings: UserSettings = new UserSettings();
 
@@ -113,17 +175,6 @@ export class InputHandler {
   ) {}
 
   initialize() {
-    const keybinds = {
-      toggleView: "Space",
-      centerCamera: "KeyC",
-      moveUp: "KeyW",
-      moveDown: "KeyS",
-      moveLeft: "KeyA",
-      moveRight: "KeyD",
-      zoomOut: "KeyQ",
-      zoomIn: "KeyE",
-      ...JSON.parse(localStorage.getItem("settings.keybinds") ?? "{}"),
-    };
     this.canvas.addEventListener("pointerdown", (e) => this.onPointerDown(e));
     window.addEventListener("pointerup", (e) => this.onPointerUp(e));
     this.canvas.addEventListener(
@@ -136,100 +187,60 @@ export class InputHandler {
       { passive: false },
     );
     window.addEventListener("pointermove", this.onPointerMove.bind(this));
+    this.pointers.clear();
     this.canvas.addEventListener("contextmenu", (e) => this.onContextMenu(e));
     window.addEventListener("mousemove", (e) => {
       if (e.movementX || e.movementY) {
         this.eventBus.emit(new MouseMoveEvent(e.clientX, e.clientY));
       }
     });
-    this.pointers.clear();
-
-    this.moveInterval = setInterval(() => {
-      let deltaX = 0;
-      let deltaY = 0;
-
-      if (
-        this.activeKeys.has(keybinds.moveUp) ||
-        this.activeKeys.has("ArrowUp")
-      )
-        deltaY += this.PAN_SPEED;
-      if (
-        this.activeKeys.has(keybinds.moveDown) ||
-        this.activeKeys.has("ArrowDown")
-      )
-        deltaY -= this.PAN_SPEED;
-      if (
-        this.activeKeys.has(keybinds.moveLeft) ||
-        this.activeKeys.has("ArrowLeft")
-      )
-        deltaX += this.PAN_SPEED;
-      if (
-        this.activeKeys.has(keybinds.moveRight) ||
-        this.activeKeys.has("ArrowRight")
-      )
-        deltaX -= this.PAN_SPEED;
-
-      if (deltaX || deltaY) {
-        this.eventBus.emit(new DragEvent(deltaX, deltaY));
-      }
-
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-
-      if (
-        this.activeKeys.has(keybinds.zoomOut) ||
-        this.activeKeys.has("Minus")
-      ) {
-        this.eventBus.emit(new ZoomEvent(cx, cy, this.ZOOM_SPEED));
-      }
-      if (
-        this.activeKeys.has(keybinds.zoomIn) ||
-        this.activeKeys.has("Equal")
-      ) {
-        this.eventBus.emit(new ZoomEvent(cx, cy, -this.ZOOM_SPEED));
-      }
-    }, 1);
-
     window.addEventListener("keydown", (e) => {
-      if (e.code === keybinds.toggleView) {
-        e.preventDefault();
+      if (e.code === "Backquote") {
         if (!this.alternateView) {
           this.alternateView = true;
           this.eventBus.emit(new AlternateViewEvent(true));
         }
       }
-
       if (e.code === "Escape") {
-        e.preventDefault();
         this.eventBus.emit(new CloseViewEvent());
       }
-
-      if (
-        [
-          keybinds.moveUp,
-          keybinds.moveDown,
-          keybinds.moveLeft,
-          keybinds.moveRight,
-          keybinds.zoomOut,
-          keybinds.zoomIn,
-          "ArrowUp",
-          "ArrowLeft",
-          "ArrowDown",
-          "ArrowRight",
-          "Minus",
-          "Equal",
-          "Digit1",
-          "Digit2",
-          keybinds.centerCamera,
-          "ControlLeft",
-          "ControlRight",
-        ].includes(e.code)
-      ) {
+      let deltaX = 0;
+      let deltaY = 0;
+      if (e.code === "ArrowUp") {
+        deltaY += 1;
+      }
+      if (e.code === "ArrowDown") {
+        deltaY -= 1;
+      }
+      if (e.code === "ArrowLeft") {
+        deltaX += 1;
+      }
+      if (e.code === "ArrowRight") {
+        deltaX -= 1;
+      }
+      if (deltaX || deltaY) {
+        this.eventBus.emit(new PreciseDragEvent(deltaX, deltaY));
+      }
+      if (/^Digit[0-9]$/.test(e.code)) {
+        const num = parseInt(e.code.replace("Digit", ""));
+        const value = num === 0 ? 1.0 : num / 10;
+        this.eventBus.emit(
+          new AttackRatioEvent(e.shiftKey ? value / 10 : value),
+        );
+      }
+      if (this.keyToActionModeMap.has(e.code)) {
+        const newMode = this.keyToActionModeMap.get(e.code)!;
+        if (this.quickActionMode !== newMode) {
+          this.quickActionMode = newMode;
+          this.eventBus.emit(new QuickActionModeEvent(newMode));
+        }
+      }
+      if (["ControlLeft", "ControlRight"].includes(e.code)) {
         this.activeKeys.add(e.code);
       }
     });
     window.addEventListener("keyup", (e) => {
-      if (e.code === keybinds.toggleView) {
+      if (e.code === "Backquote") {
         e.preventDefault();
         this.alternateView = false;
         this.eventBus.emit(new AlternateViewEvent(false));
@@ -240,19 +251,12 @@ export class InputHandler {
         this.eventBus.emit(new RefreshGraphicsEvent());
       }
 
-      if (e.code === "Digit1") {
+      if (this.keyToActionModeMap.has(e.code)) {
         e.preventDefault();
-        this.eventBus.emit(new AttackRatioEvent(-10));
-      }
-
-      if (e.code === "Digit2") {
-        e.preventDefault();
-        this.eventBus.emit(new AttackRatioEvent(10));
-      }
-
-      if (e.code === keybinds.centerCamera) {
-        e.preventDefault();
-        this.eventBus.emit(new CenterCameraEvent());
+        if (this.quickActionMode === this.keyToActionModeMap.get(e.code)) {
+          this.quickActionMode = null;
+          this.eventBus.emit(new QuickActionModeEvent(null));
+        }
       }
 
       this.activeKeys.delete(e.code);
@@ -307,7 +311,11 @@ export class InputHandler {
       }
 
       if (!this.userSettings.leftClickOpensMenu() || event.shiftKey) {
-        this.eventBus.emit(new MouseUpEvent(event.x, event.y));
+        if (this.quickActionMode === null) {
+          this.eventBus.emit(new MouseUpEvent(event.x, event.y));
+        } else {
+          this.eventBus.emit(new QAMouseUpEvent(event.x, event.y));
+        }
       } else {
         this.eventBus.emit(new ContextMenuEvent(event.clientX, event.clientY));
       }
@@ -366,7 +374,11 @@ export class InputHandler {
 
   private onContextMenu(event: MouseEvent) {
     event.preventDefault();
-    this.eventBus.emit(new ContextMenuEvent(event.clientX, event.clientY));
+    if (this.quickActionMode === null) {
+      this.eventBus.emit(new ContextMenuEvent(event.clientX, event.clientY));
+    } else {
+      this.eventBus.emit(new QAMouse2UpEvent(event.clientX, event.clientY));
+    }
   }
 
   private getPinchDistance(): number {

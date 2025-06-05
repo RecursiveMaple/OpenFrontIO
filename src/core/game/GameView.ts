@@ -14,6 +14,7 @@ import {
   PlayerID,
   PlayerInfo,
   PlayerProfile,
+  PlayerTiles,
   PlayerType,
   Team,
   TerrainType,
@@ -148,6 +149,10 @@ export class PlayerView {
 
   async borderTiles(): Promise<PlayerBorderTiles> {
     return this.game.worker.playerBorderTiles(this.id());
+  }
+
+  async tiles(): Promise<PlayerTiles> {
+    return this.game.worker.playerTiles(this.id());
   }
 
   outgoingAttacks(): AttackUpdate[] {

@@ -71,12 +71,7 @@ export class ControlPanel extends LitElement implements Layer {
     this.uiState.attackRatio = this.attackRatio;
     this.currentTroopRatio = this.targetTroopRatio;
     this.eventBus.on(AttackRatioEvent, (event) => {
-      let newAttackRatio =
-        (parseInt(
-          (document.getElementById("attack-ratio") as HTMLInputElement).value,
-        ) +
-          event.attackRatio) /
-        100;
+      let newAttackRatio = event.attackRatio;
 
       if (newAttackRatio < 0.01) {
         newAttackRatio = 0.01;
@@ -84,11 +79,6 @@ export class ControlPanel extends LitElement implements Layer {
 
       if (newAttackRatio > 1) {
         newAttackRatio = 1;
-      }
-
-      if (newAttackRatio === 0.11 && this.attackRatio === 0.01) {
-        // If we're changing the ratio from 1%, then set it to 10% instead of 11% to keep a consistency
-        newAttackRatio = 0.1;
       }
 
       this.attackRatio = newAttackRatio;
@@ -216,7 +206,8 @@ export class ControlPanel extends LitElement implements Layer {
               >${translateText("control_panel.pop")}:</span
             >
             <span translate="no"
-              >${renderTroops(this._population)} /
+              >${renderTroops(this._population)}
+              [${((this._population / this._maxPopulation) * 100).toFixed(1)}%]/
               ${renderTroops(this._maxPopulation)}
               <span
                 class="${this._popRateIsIncreasing
@@ -275,6 +266,10 @@ export class ControlPanel extends LitElement implements Layer {
           <label class="block text-white mb-1" translate="no"
             >${translateText("control_panel.attack_ratio")}:
             ${(this.attackRatio * 100).toFixed(0)}%
+            [${(
+              ((this.attackRatio * this._troops) / this._maxPopulation) *
+              100
+            ).toFixed(1)}%]
             (${renderTroops(
               (this.game?.myPlayer()?.troops() ?? 0) * this.attackRatio,
             )})</label
@@ -287,7 +282,15 @@ export class ControlPanel extends LitElement implements Layer {
             <!-- Fill track -->
             <div
               class="absolute left-0 top-3 h-2 bg-red-500/60 rounded transition-all duration-300"
-              style="width: ${this.attackRatio * 100}%"
+              style="width: ${Math.min(
+                Math.max(
+                  ((this._population - 0.42 * this._maxPopulation) /
+                    this._troops) *
+                    100,
+                  0,
+                ),
+                100,
+              )}%"
             ></div>
             <!-- Range input - exactly overlaying the visual elements -->
             <input

@@ -3,6 +3,7 @@ import {
   PlayerBorderTiles,
   PlayerID,
   PlayerProfile,
+  PlayerTiles,
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
 import { GameUpdateViewData } from "../game/GameUpdates";
@@ -20,6 +21,8 @@ export type WorkerMessageType =
   | "player_profile_result"
   | "player_border_tiles"
   | "player_border_tiles_result"
+  | "player_tiles"
+  | "player_tiles_result"
   | "attack_average_position"
   | "attack_average_position_result"
   | "transport_ship_spawn"
@@ -89,6 +92,16 @@ export interface PlayerBorderTilesResultMessage extends BaseWorkerMessage {
   result: PlayerBorderTiles;
 }
 
+export interface PlayerTilesMessage extends BaseWorkerMessage {
+  type: "player_tiles";
+  playerID: PlayerID;
+}
+
+export interface PlayerTilesResultMessage extends BaseWorkerMessage {
+  type: "player_tiles_result";
+  result: PlayerTiles;
+}
+
 export interface AttackAveragePositionMessage extends BaseWorkerMessage {
   type: "attack_average_position";
   playerID: number;
@@ -120,6 +133,7 @@ export type MainThreadMessage =
   | PlayerActionsMessage
   | PlayerProfileMessage
   | PlayerBorderTilesMessage
+  | PlayerTilesMessage
   | AttackAveragePositionMessage
   | TransportShipSpawnMessage;
 
@@ -130,5 +144,6 @@ export type WorkerMessage =
   | PlayerActionsResultMessage
   | PlayerProfileResultMessage
   | PlayerBorderTilesResultMessage
+  | PlayerTilesResultMessage
   | AttackAveragePositionResultMessage
   | TransportShipSpawnResultMessage;

@@ -4,6 +4,7 @@ import {
   PlayerBorderTiles,
   PlayerID,
   PlayerProfile,
+  PlayerTiles,
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
 import { ErrorUpdate, GameUpdateViewData } from "../game/GameUpdates";
@@ -152,6 +153,32 @@ export class WorkerClient {
 
       this.worker.postMessage({
         type: "player_border_tiles",
+        id: messageId,
+        playerID: playerID,
+      });
+    });
+  }
+
+  playerTiles(playerID: PlayerID): Promise<PlayerTiles> {
+    return new Promise((resolve, reject) => {
+      if (!this.isInitialized) {
+        reject(new Error("Worker not initialized"));
+        return;
+      }
+
+      const messageId = generateID();
+
+      this.messageHandlers.set(messageId, (message) => {
+        if (
+          message.type === "player_tiles_result" &&
+          message.result !== undefined
+        ) {
+          resolve(message.result);
+        }
+      });
+
+      this.worker.postMessage({
+        type: "player_tiles",
         id: messageId,
         playerID: playerID,
       });

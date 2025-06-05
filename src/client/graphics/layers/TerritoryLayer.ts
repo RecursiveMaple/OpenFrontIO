@@ -4,7 +4,7 @@ import { Theme } from "../../../core/configuration/Config";
 import { EventBus } from "../../../core/EventBus";
 import { Cell, PlayerType, UnitType } from "../../../core/game/Game";
 import { euclDistFN, TileRef } from "../../../core/game/GameMap";
-import { GameUpdateType } from "../../../core/game/GameUpdates";
+import { GameUpdateType, PlayerUpdate } from "../../../core/game/GameUpdates";
 import { GameView, PlayerView } from "../../../core/game/GameView";
 import { PseudoRandom } from "../../../core/PseudoRandom";
 import { AlternateViewEvent, DragEvent } from "../../InputHandler";
@@ -36,6 +36,12 @@ export class TerritoryLayer implements Layer {
   private lastRefresh = 0;
 
   private lastFocusedPlayer: PlayerView | null = null;
+  private playerTilesMap: Map<number, number> = new Map();
+  private captureTiles: { low: number; mid: number; high: number } = {
+    low: 200,
+    mid: 400,
+    high: 800,
+  };
 
   constructor(
     private game: GameView,
@@ -74,6 +80,32 @@ export class TerritoryLayer implements Layer {
               this.enqueueTile(t);
             }
           });
+      }
+    });
+    this.game.updatesSinceLastTick()![GameUpdateType.Player].forEach((u) => {
+      const update = u as PlayerUpdate;
+      const playerId = update.smallID;
+      const currTiles = update.tilesOwned;
+      const prevTiles = this.playerTilesMap.get(playerId) || 0;
+      this.playerTilesMap.set(playerId, currTiles);
+
+      if (
+        (currTiles - this.captureTiles.low) *
+          (prevTiles - this.captureTiles.low) <=
+          0 ||
+        (currTiles - this.captureTiles.mid) *
+          (prevTiles - this.captureTiles.mid) <=
+          0 ||
+        (currTiles - this.captureTiles.high) *
+          (prevTiles - this.captureTiles.high) <=
+          0
+      ) {
+        const player = this.game.playerBySmallID(playerId) as PlayerView;
+        player.tiles().then((playerTiles) => {
+          playerTiles.tiles.forEach((tile: TileRef) => {
+            this.enqueueTile(tile);
+          });
+        });
       }
     });
 
@@ -286,12 +318,19 @@ export class TerritoryLayer implements Layer {
         );
       }
     } else {
-      this.paintCell(
-        this.game.x(tile),
-        this.game.y(tile),
-        this.theme.territoryColor(owner),
-        150,
-      );
+      const ownedTiles = owner.numTilesOwned();
+      const tileX = this.game.x(tile);
+      const tileY = this.game.y(tile);
+      let color = this.theme.territoryColor(owner);
+      if (
+        !this.game.inSpawnPhase() &&
+        ((ownedTiles < this.captureTiles.low && (tileX + tileY) % 2 === 0) ||
+          (ownedTiles < this.captureTiles.mid && (tileX + tileY) % 4 === 0) ||
+          (ownedTiles < this.captureTiles.high && (tileX + tileY) % 8 === 0))
+      ) {
+        color = this.theme.spawnHighlightColor();
+      }
+      this.paintCell(tileX, tileY, color, 150);
     }
   }
 

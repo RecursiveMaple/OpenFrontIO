@@ -2,6 +2,22 @@ import { html, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { DirectiveResult } from "lit/directive.js";
 import { unsafeHTML, UnsafeHTMLDirective } from "lit/directives/unsafe-html.js";
+import allianceIcon from "../../../../resources/images/AllianceIconWhite.svg";
+import warshipIcon from "../../../../resources/images/BattleshipIconWhite.svg";
+import boatIcon from "../../../../resources/images/BoatIconWhite.svg";
+import cityIcon from "../../../../resources/images/CityIconWhite.svg";
+import donateGoldIcon from "../../../../resources/images/DonateGoldIconWhite.svg";
+import donateTroopIcon from "../../../../resources/images/DonateTroopIconWhite.svg";
+import goldCoinIcon from "../../../../resources/images/GoldCoinIcon.svg";
+import mirvIcon from "../../../../resources/images/MIRVIcon.svg";
+import missileSiloIcon from "../../../../resources/images/MissileSiloIconWhite.svg";
+import hydrogenBombIcon from "../../../../resources/images/MushroomCloudIconWhite.svg";
+import atomBombIcon from "../../../../resources/images/NukeIconWhite.svg";
+import portIcon from "../../../../resources/images/PortIcon.svg";
+import samlauncherIcon from "../../../../resources/images/SamLauncherIconWhite.svg";
+import shieldIcon from "../../../../resources/images/ShieldIconWhite.svg";
+import targetIcon from "../../../../resources/images/TargetIconWhite.svg";
+import traitorIcon from "../../../../resources/images/TraitorIconWhite.svg";
 import { EventBus } from "../../../core/EventBus";
 import {
   AllPlayers,
@@ -32,7 +48,6 @@ import {
 import { Layer } from "./Layer";
 
 import { GameView, PlayerView, UnitView } from "../../../core/game/GameView";
-import { onlyImages } from "../../../core/Util";
 import { renderTroops } from "../../Utils";
 import {
   GoToPlayerEvent,
@@ -99,6 +114,193 @@ export class EventsDisplay extends LitElement implements Layer {
     [GameUpdateType.UnitIncoming, (u) => this.onUnitIncomingEvent(u)],
   ]);
 
+  private readonly unitIconMap = new Map<string, string>([
+    ["Transport", boatIcon],
+    ["Warship", warshipIcon],
+    ["Port", portIcon],
+    ["Trade Ship", goldCoinIcon],
+    ["Missile Silo", missileSiloIcon],
+    ["Defense Post", shieldIcon],
+    ["SAM Launcher", samlauncherIcon],
+    ["City", cityIcon],
+  ]);
+
+  private readonly templateMap: Map<
+    RegExp,
+    {
+      format: (matches: RegExpExecArray, type: MessageType) => string;
+      priority: number;
+      duration: number;
+    }
+  > = new Map([
+    [
+      /Conquered (.+) received (.+) gold/,
+      {
+        format: (matches, type) => `${matches[2]} 💰 (conquer ${matches[1]})`,
+        priority: 100000,
+        duration: 30,
+      },
+    ],
+    [
+      /Captured (.+) from (.+)/,
+      {
+        format: (matches, type) =>
+          `Captured ${this.unitIconMap.has(matches[1]) ? this.getImgTag(this.unitIconMap.get(matches[1])!, type) : matches[1]} from ${matches[2]}`,
+        priority: 100000,
+        duration: 30,
+      },
+    ],
+    [
+      /Naval invasion incoming from (.+)/,
+      {
+        format: (matches, type) =>
+          `${matches[1]} ${this.getImgTag(boatIcon, type)}`,
+        priority: 10,
+        duration: 100,
+      },
+    ],
+    [
+      /Received (.+) gold from trade with (.+)/,
+      {
+        format: (matches, type) => `${matches[1]} 💰 (trade ${matches[2]})`,
+        priority: 100000,
+        duration: 30,
+      },
+    ],
+    [
+      /Received (.+) gold from ship captured from (.+)/,
+      {
+        format: (matches, type) => `${matches[1]} 💰 (hijack ${matches[2]})`,
+        priority: 100000,
+        duration: 30,
+      },
+    ],
+    [
+      /(.+) - atom bomb inbound/,
+      {
+        format: (matches, type) =>
+          `${matches[1]} ${this.getImgTag(atomBombIcon, type)}`,
+        priority: 10,
+        duration: 100,
+      },
+    ],
+    [
+      /Your (.+) was destroyed/,
+      {
+        format: (matches, type) =>
+          `${this.unitIconMap.has(matches[1]) ? this.getImgTag(this.unitIconMap.get(matches[1])!, type) : matches[1]} destroyed`,
+        priority: 20,
+        duration: 50,
+      },
+    ],
+    [
+      /(.+) - hydrogen bomb inbound/,
+      {
+        format: (matches, type) =>
+          `${matches[1]} ${this.getImgTag(hydrogenBombIcon, type)}`,
+        priority: 10,
+        duration: 100,
+      },
+    ],
+    [
+      /Sent (.+) troops to (.+)/,
+      {
+        format: (matches, type) =>
+          `${matches[1]} ${this.getImgTag(donateTroopIcon, type)} to ${matches[2]}`,
+        priority: 100000,
+        duration: 30,
+      },
+    ],
+    [
+      /Received (.+) troops from (.+)/,
+      {
+        format: (matches, type) =>
+          `${matches[2]} ${this.getImgTag(donateTroopIcon, type)} ${matches[1]}`,
+        priority: 20,
+        duration: 100,
+      },
+    ],
+    [
+      /⚠️⚠️⚠️ (.+) - MIRV INBOUND ⚠️⚠️⚠️/,
+      {
+        format: (matches, type) =>
+          `⚠️${matches[1]} ${this.getImgTag(mirvIcon, type)}⚠️`,
+        priority: 10,
+        duration: 100,
+      },
+    ],
+    [
+      /Attack cancelled, (.+) soldiers killed during retreat./,
+      {
+        format: (matches, type) => `Retreated (${matches[1]} died)`,
+        priority: 100000,
+        duration: 50,
+      },
+    ],
+    [
+      /Missile intercepted (.+)/,
+      {
+        format: (matches, type) =>
+          `Downed ${this.unitIconMap.has(matches[1]) ? this.getImgTag(this.unitIconMap.get(matches[1])!, type) : matches[1]}`,
+        priority: 30,
+        duration: 30,
+      },
+    ],
+    [
+      /Sent (.+) gold to (.+)/,
+      {
+        format: (matches, type) =>
+          `${matches[1]} ${this.getImgTag(donateGoldIcon, type)} to ${matches[2]}`,
+        priority: 100000,
+        duration: 30,
+      },
+    ],
+    [
+      /Received (.+) gold from (.+)/,
+      {
+        format: (matches, type) =>
+          `${matches[2]} ${this.getImgTag(donateGoldIcon, type)} ${matches[1]}`,
+        priority: 20,
+        duration: 100,
+      },
+    ],
+    [
+      /No boats available, max (.+)/,
+      {
+        format: (matches, type) => `No boats available (max ${matches[1]})`,
+        priority: 20,
+        duration: 50,
+      },
+    ],
+    [
+      /Missile failed to intercept (.+)/,
+      {
+        format: (matches, type) =>
+          `Missed ${this.unitIconMap.has(matches[1]) ? this.getImgTag(this.unitIconMap.get(matches[1])!, type) : matches[1]}`,
+        priority: 30,
+        duration: 50,
+      },
+    ],
+    [
+      /(.+) MIRV warheads intercepted/,
+      {
+        format: (matches, type) =>
+          `Downed ${matches[1]} ${this.getImgTag(mirvIcon, type)}`,
+        priority: 30,
+        duration: 30,
+      },
+    ],
+    [
+      /Your (.+) was captured by (.+)/,
+      {
+        format: (matches, type) =>
+          `Lost ${this.unitIconMap.has(matches[1]) ? this.getImgTag(this.unitIconMap.get(matches[1])!, type) : matches[1]} to ${matches[2]}`,
+        priority: 20,
+        duration: 50,
+      },
+    ],
+  ]);
+
   constructor() {
     super();
     this.events = [];
@@ -127,8 +329,8 @@ export class EventsDisplay extends LitElement implements Layer {
       return shouldKeep;
     });
 
-    if (remainingEvents.length > 30) {
-      remainingEvents = remainingEvents.slice(-30);
+    if (remainingEvents.length > 50) {
+      remainingEvents = remainingEvents.slice(-50);
     }
 
     if (this.events.length !== remainingEvents.length) {
@@ -192,13 +394,32 @@ export class EventsDisplay extends LitElement implements Layer {
       return;
     }
 
+    let message = event.message;
+    let priority = 100000;
+    let duration = 600;
+
+    for (const [pattern, template] of this.templateMap) {
+      const matches = pattern.exec(message);
+      if (matches) {
+        message = template.format(matches, event.messageType);
+        priority = template.priority;
+        duration = template.duration;
+      }
+    }
+
     this.addEvent({
-      description: event.message,
+      description: message,
       createdAt: this.game.ticks(),
       highlight: true,
       type: event.messageType,
+      priority: priority,
+      duration: duration,
       unsafeDescription: true,
     });
+  }
+
+  private getImgTag(icon: string, type: MessageType): string {
+    return `<img src="${icon}" style="height: 1.2em; width: 1.2em; vertical-align: -0.2em; display: inline-block; stroke: blue; filter: ${this.getIconColorFilter(type)};"/>`;
   }
 
   onDisplayChatEvent(event: DisplayChatMessageUpdate) {
@@ -243,7 +464,7 @@ export class EventsDisplay extends LitElement implements Layer {
     ) as PlayerView;
 
     this.addEvent({
-      description: `${requestor.name()} requests an alliance!`,
+      description: `${requestor.name()} request ${this.getImgTag(allianceIcon, MessageType.INFO)}`,
       buttons: [
         {
           text: "Focus",
@@ -276,8 +497,9 @@ export class EventsDisplay extends LitElement implements Layer {
           new SendAllianceReplyIntentEvent(requestor, recipient, false),
         ),
       priority: 0,
-      duration: 150,
+      duration: this.game.config().allianceRequestCooldown(),
       focusID: update.requestorID,
+      unsafeDescription: true,
     });
   }
 
@@ -291,14 +513,19 @@ export class EventsDisplay extends LitElement implements Layer {
       update.request.recipientID,
     ) as PlayerView;
 
+    const type = update.accepted ? MessageType.SUCCESS : MessageType.ERROR;
+
     this.addEvent({
-      description: `${recipient.name()} ${
+      description: `${recipient.name()} ${this.getImgTag(allianceIcon, type)} ${
         update.accepted ? "accepted" : "rejected"
-      } your alliance request`,
-      type: update.accepted ? MessageType.SUCCESS : MessageType.ERROR,
+      }`,
+      type: type,
       highlight: true,
       createdAt: this.game.ticks(),
+      priority: 10,
+      duration: 50,
       focusID: update.request.recipientID,
+      unsafeDescription: true,
     });
   }
 
@@ -320,22 +547,25 @@ export class EventsDisplay extends LitElement implements Layer {
       const durationText =
         traitorDuration === 1 ? "1 second" : `${traitorDuration} seconds`;
 
+      const duration = this.game.config().traitorDuration() / 10;
       this.addEvent({
         description:
-          `You broke your alliance with ${betrayed.name()}, making you a TRAITOR ` +
-          `(${malusPercent}% defense debuff for ${durationText})`,
+          `${this.getImgTag(traitorIcon, MessageType.ERROR)} ${betrayed.name()} ` +
+          `(TRAITOR: ${malusPercent}% defense debuff for ${duration}s)`,
         type: MessageType.ERROR,
         highlight: true,
         createdAt: this.game.ticks(),
         focusID: update.betrayedID,
+        unsafeDescription: true,
       });
     } else if (betrayed === myPlayer) {
       this.addEvent({
-        description: `${traitor.name()} broke their alliance with you`,
+        description: `${traitor.name()} ${this.getImgTag(traitorIcon, MessageType.ERROR)}`,
         type: MessageType.ERROR,
         highlight: true,
         createdAt: this.game.ticks(),
         focusID: update.traitorID,
+        unsafeDescription: true,
       });
     }
   }
@@ -360,6 +590,7 @@ export class EventsDisplay extends LitElement implements Layer {
       highlight: true,
       createdAt: this.game.ticks(),
       focusID: otherID,
+      unsafeDescription: true,
     });
   }
 
@@ -371,11 +602,12 @@ export class EventsDisplay extends LitElement implements Layer {
     const target = this.game.playerBySmallID(event.targetID) as PlayerView;
 
     this.addEvent({
-      description: `${other.name()} requests you attack ${target.name()}`,
+      description: `${other.name()} ${this.getImgTag(targetIcon, MessageType.INFO)} ${target.name()}`,
       type: MessageType.INFO,
       highlight: true,
       createdAt: this.game.ticks(),
       focusID: event.targetID,
+      unsafeDescription: true,
     });
   }
 
@@ -419,7 +651,7 @@ export class EventsDisplay extends LitElement implements Layer {
 
     if (recipient === myPlayer) {
       this.addEvent({
-        description: `${sender.displayName()}:${update.emoji.message}`,
+        description: `${sender.displayName()}: ${update.emoji.message}`,
         unsafeDescription: true,
         type: MessageType.INFO,
         highlight: true,
@@ -428,9 +660,9 @@ export class EventsDisplay extends LitElement implements Layer {
       });
     } else if (sender === myPlayer && recipient !== AllPlayers) {
       this.addEvent({
-        description: `Sent ${(recipient as PlayerView).displayName()}: ${
+        description: `${
           update.emoji.message
-        }`,
+        } to ${(recipient as PlayerView).displayName()}`,
         unsafeDescription: true,
         type: MessageType.INFO,
         highlight: true,
@@ -449,12 +681,27 @@ export class EventsDisplay extends LitElement implements Layer {
 
     const unitView = this.game.unit(event.unitID);
 
+    let message = event.message;
+    let priority = 100000;
+    let duration = 600;
+
+    for (const [pattern, template] of this.templateMap) {
+      const matches = pattern.exec(message);
+      if (matches) {
+        message = template.format(matches, event.messageType);
+        priority = template.priority;
+        duration = template.duration;
+      }
+    }
+
     this.addEvent({
-      description: event.message,
+      description: message,
       type: event.messageType,
-      unsafeDescription: false,
+      unsafeDescription: true,
       highlight: true,
       createdAt: this.game.ticks(),
+      priority: priority,
+      duration: duration,
       unitView: unitView,
     });
   }
@@ -476,11 +723,31 @@ export class EventsDisplay extends LitElement implements Layer {
     }
   }
 
+  private getIconColorFilter(type: MessageType): string {
+    switch (type) {
+      case MessageType.SUCCESS:
+        // text-green-300
+        return "brightness(0) saturate(100%) invert(87%) sepia(12%) saturate(1188%) hue-rotate(101deg) brightness(92%) contrast(96%)";
+      case MessageType.INFO:
+        // text-gray-200
+        return "brightness(0) saturate(100%) invert(93%) sepia(8%) saturate(169%) hue-rotate(177deg) brightness(95%) contrast(92%)";
+      case MessageType.WARN:
+        // text-yellow-300
+        return "brightness(0) saturate(100%) invert(85%) sepia(22%) saturate(5017%) hue-rotate(10deg) brightness(103%) contrast(101%)";
+      case MessageType.ERROR:
+        // text-red-300
+        return "brightness(0) saturate(100%) invert(72%) sepia(32%) saturate(845%) hue-rotate(314deg) brightness(103%) contrast(103%)";
+      default:
+        // text-white
+        return "brightness(0) saturate(100%) invert(100%)";
+    }
+  }
+
   private getEventDescription(
     event: Event,
   ): string | DirectiveResult<typeof UnsafeHTMLDirective> {
     return event.unsafeDescription
-      ? unsafeHTML(onlyImages(event.description))
+      ? unsafeHTML(event.description)
       : event.description;
   }
 
@@ -509,7 +776,7 @@ export class EventsDisplay extends LitElement implements Layer {
       ${this.incomingAttacks.length > 0
         ? html`
             <tr class="border-t border-gray-700">
-              <td class="lg:p-3 p-1 text-left text-red-400">
+              <td class="lg:p-2 p-1 text-left text-red-400">
                 ${this.incomingAttacks.map(
                   (attack) => html`
                     <button
@@ -539,7 +806,7 @@ export class EventsDisplay extends LitElement implements Layer {
       ${this.outgoingAttacks.length > 0
         ? html`
             <tr class="border-t border-gray-700">
-              <td class="lg:p-3 p-1 text-left text-blue-400">
+              <td class="lg:p-2 p-1 text-left text-blue-400">
                 ${this.outgoingAttacks.map(
                   (attack) => html`
                     <button
@@ -577,7 +844,7 @@ export class EventsDisplay extends LitElement implements Layer {
       ${this.outgoingLandAttacks.length > 0
         ? html`
             <tr class="border-t border-gray-700">
-              <td class="lg:p-3 p-1 text-left text-gray-400">
+              <td class="lg:p-2 p-1 text-left text-gray-400">
                 ${this.outgoingLandAttacks.map(
                   (landAttack) => html`
                     <button translate="no" class="ml-2">
@@ -608,7 +875,7 @@ export class EventsDisplay extends LitElement implements Layer {
       ${this.outgoingBoats.length > 0
         ? html`
             <tr class="border-t border-gray-700">
-              <td class="lg:p-3 p-1 text-left text-blue-400">
+              <td class="lg:p-2 p-1 text-left text-blue-400">
                 ${this.outgoingBoats.map(
                   (boat) => html`
                     <button
@@ -654,7 +921,7 @@ export class EventsDisplay extends LitElement implements Layer {
       <div
         class="${this._hidden
           ? "w-fit px-[10px] py-[5px]"
-          : ""} rounded-md bg-black bg-opacity-60 relative max-h-[30vh] flex flex-col-reverse overflow-y-auto w-full lg:bottom-2.5 lg:right-2.5 z-50 lg:max-w-[30vw] lg:w-full lg:w-auto"
+          : ""} rounded-md bg-black bg-opacity-60 relative max-h-[50vh] flex flex-col-reverse overflow-y-auto w-full lg:bottom-2.5 lg:right-2.5 z-50 lg:max-w-[30vw] lg:w-full lg:w-auto"
       >
         <div>
           <div class="w-full bg-black/80 sticky top-0 px-[10px]">
@@ -683,7 +950,7 @@ export class EventsDisplay extends LitElement implements Layer {
             >
           </button>
           <table
-            class="w-full border-collapse text-white shadow-lg lg:text-xl text-xs ${this
+            class="w-full border-collapse text-white shadow-lg lg:text-base text-xs ${this
               ._hidden
               ? "hidden"
               : ""}"
@@ -697,7 +964,7 @@ export class EventsDisplay extends LitElement implements Layer {
                       event.type,
                     )}"
                   >
-                    <td class="lg:p-3 p-1 text-left">
+                    <td class="lg:p-2 p-1 text-left">
                       ${event.focusID
                         ? html`<button
                             @click=${() => {
