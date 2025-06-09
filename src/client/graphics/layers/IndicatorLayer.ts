@@ -527,7 +527,9 @@ export class IndicatorLayer implements Layer {
         this.eventBus.emit(
           new SendDonateGoldIntentEvent(
             other,
-            BigInt(this.uiState.attackRatio * Number(myPlayer.gold())),
+            BigInt(
+              Math.floor(this.uiState.attackRatio * Number(myPlayer.gold())),
+            ),
           ),
         );
         break;
