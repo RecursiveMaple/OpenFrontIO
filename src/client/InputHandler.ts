@@ -111,6 +111,7 @@ export class QAMouse2UpEvent implements GameEvent {
 
 export enum QuickActionMode {
   BoatAttack,
+  BoatAttackOneTroop,
   SendAlliance,
   BreakAlliance,
   DonateTroops,
@@ -150,6 +151,7 @@ export class InputHandler {
 
   private readonly keyToActionModeMap = new Map<string, QuickActionMode>([
     ["KeyB", QuickActionMode.BoatAttack],
+    ["Space", QuickActionMode.BoatAttackOneTroop],
     ["Equal", QuickActionMode.SendAlliance],
     ["Minus", QuickActionMode.BreakAlliance],
     ["KeyM", QuickActionMode.DonateMoney],

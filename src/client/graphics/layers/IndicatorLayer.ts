@@ -55,6 +55,7 @@ export class IndicatorLayer implements Layer {
 
   private readonly actionIconMap = new Map<QuickActionMode, string>([
     [QuickActionMode.BoatAttack, boatIcon],
+    [QuickActionMode.BoatAttackOneTroop, boatIcon],
     [QuickActionMode.SendAlliance, allianceIcon],
     [QuickActionMode.BreakAlliance, traitorIcon],
     [QuickActionMode.DonateTroops, donateTroopIcon],
@@ -192,6 +193,7 @@ export class IndicatorLayer implements Layer {
 
     switch (this.quickActionMode) {
       case QuickActionMode.BoatAttack:
+      case QuickActionMode.BoatAttackOneTroop:
         this.borderElement
           .style("left", `${x - this.iconSize / 2 - 4}px`)
           .style("top", `${y - this.iconSize / 2 - 4}px`)
@@ -325,6 +327,7 @@ export class IndicatorLayer implements Layer {
 
       switch (this.quickActionMode) {
         case QuickActionMode.BoatAttack:
+        case QuickActionMode.BoatAttackOneTroop:
           if (
             actions.buildableUnits.find(
               (bu) => bu.type === UnitType.TransportShip,
@@ -418,7 +421,8 @@ export class IndicatorLayer implements Layer {
         y,
         icon,
         active ? "#53ac75" : "#c74848",
-        this.quickActionMode === QuickActionMode.BoatAttack
+        this.quickActionMode === QuickActionMode.BoatAttack ||
+          this.quickActionMode === QuickActionMode.BoatAttackOneTroop
           ? this.validShore === null
             ? "#c74848"
             : "#53ac75"
@@ -470,6 +474,7 @@ export class IndicatorLayer implements Layer {
 
     switch (this.quickActionMode) {
       case QuickActionMode.BoatAttack:
+      case QuickActionMode.BoatAttackOneTroop:
         if (this.boatAttackSource !== null) {
           const spawnTile: Cell | null = new Cell(
             this.g.x(this.boatAttackSource),
@@ -491,11 +496,15 @@ export class IndicatorLayer implements Layer {
           if (spawn !== false) {
             spawnTile = new Cell(this.g.x(spawn), this.g.y(spawn));
           }
+          const troops =
+            this.quickActionMode === QuickActionMode.BoatAttack
+              ? this.uiState.attackRatio * myPlayer.troops()
+              : 1;
           this.eventBus.emit(
             new SendBoatAttackIntentEvent(
               other.id(),
               validCell,
-              this.uiState.attackRatio * myPlayer.troops(),
+              troops,
               spawnTile,
             ),
           );
@@ -578,7 +587,10 @@ export class IndicatorLayer implements Layer {
     this.clientX = event.x;
     this.clientY = event.y;
 
-    if (this.quickActionMode !== QuickActionMode.BoatAttack) {
+    if (
+      this.quickActionMode !== QuickActionMode.BoatAttack &&
+      this.quickActionMode !== QuickActionMode.BoatAttackOneTroop
+    ) {
       return;
     }
 
@@ -609,7 +621,10 @@ export class IndicatorLayer implements Layer {
 
   private onModeChange(event: QuickActionModeEvent) {
     this.quickActionMode = event.mode;
-    if (event.mode !== QuickActionMode.BoatAttack) {
+    if (
+      event.mode !== QuickActionMode.BoatAttack &&
+      event.mode !== QuickActionMode.BoatAttackOneTroop
+    ) {
       this.boatAttackSource = null;
     }
     if (event.mode === null) {
