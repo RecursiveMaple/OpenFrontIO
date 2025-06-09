@@ -36,7 +36,7 @@ export class TeamStats extends LitElement implements Layer {
 
     if (!this._shownOnInit && !this.game.inSpawnPhase()) {
       this._shownOnInit = true;
-      this._teamStatsHidden = false;
+      this._teamStatsHidden = true;
       this.updateTeamStats();
     }
 
@@ -129,7 +129,7 @@ export class TeamStats extends LitElement implements Layer {
 
     th,
     td {
-      padding: 5px;
+      padding: 4px;
       text-align: center;
       border-bottom: 1px solid rgba(51, 51, 51, 0.2);
       color: var(--text-color, white);
@@ -138,6 +138,11 @@ export class TeamStats extends LitElement implements Layer {
     th {
       background-color: rgb(31 41 55 / 0.5);
       color: white;
+      font-size: 0.8em;
+    }
+
+    td {
+      font-size: 0.8em;
     }
 
     .hidden {
