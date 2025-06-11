@@ -533,14 +533,7 @@ export class IndicatorLayer implements Layer {
         break;
 
       case QuickActionMode.DonateMoney:
-        this.eventBus.emit(
-          new SendDonateGoldIntentEvent(
-            other,
-            BigInt(
-              Math.floor(this.uiState.attackRatio * Number(myPlayer.gold())),
-            ),
-          ),
-        );
+        this.eventBus.emit(new SendDonateGoldIntentEvent(other, null));
         break;
 
       case QuickActionMode.Target:
