@@ -161,60 +161,12 @@ export default async (env, argv) => {
           compress: true,
           port: 9000,
           proxy: [
-            // WebSocket proxies
-            {
-              context: ["/socket"],
-              target: "wss://openfront.io",
-              ws: true,
-              changeOrigin: true,
-              logLevel: "debug",
-            },
-            // Worker WebSocket proxies - using direct paths without /socket suffix
-            {
-              context: ["/w0"],
-              target: "wss://openfront.io",
-              ws: true,
-              secure: true,
-              changeOrigin: true,
-              logLevel: "debug",
-            },
-            {
-              context: ["/w1"],
-              target: "wss://openfront.io",
-              ws: true,
-              secure: true,
-              changeOrigin: true,
-              logLevel: "debug",
-            },
-            {
-              context: ["/w2"],
-              target: "wss://openfront.io",
-              ws: true,
-              secure: true,
-              changeOrigin: true,
-              logLevel: "debug",
-            },
             // Worker proxies for HTTP requests
             {
-              context: ["/w0"],
+              context: (pathname) => {
+                return pathname.match(/^\/w\d+\//);
+              },
               target: "https://openfront.io",
-              pathRewrite: { "^/w0": "" },
-              secure: true,
-              changeOrigin: true,
-              logLevel: "debug",
-            },
-            {
-              context: ["/w1"],
-              target: "https://openfront.io",
-              pathRewrite: { "^/w1": "" },
-              secure: true,
-              changeOrigin: true,
-              logLevel: "debug",
-            },
-            {
-              context: ["/w2"],
-              target: "https://openfront.io",
-              pathRewrite: { "^/w2": "" },
               secure: true,
               changeOrigin: true,
               logLevel: "debug",
