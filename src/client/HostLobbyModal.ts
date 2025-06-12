@@ -522,7 +522,7 @@ export class HostLobbyModal extends LitElement {
   private async putGameConfig() {
     const config = await getServerConfigFromClient();
     const response = await fetch(
-      `${window.location.origin}/${config.workerPath(this.lobbyId)}/api/game/${this.lobbyId}`,
+      `/${config.workerPath(this.lobbyId)}/api/game/${this.lobbyId}`,
       {
         method: "PUT",
         headers: {
@@ -563,7 +563,7 @@ export class HostLobbyModal extends LitElement {
     this.close();
     const config = await getServerConfigFromClient();
     const response = await fetch(
-      `${window.location.origin}/${config.workerPath(this.lobbyId)}/api/start_game/${this.lobbyId}`,
+      `/${config.workerPath(this.lobbyId)}/api/start_game/${this.lobbyId}`,
       {
         method: "POST",
         headers: {
