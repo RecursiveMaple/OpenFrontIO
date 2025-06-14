@@ -42,19 +42,19 @@ export class EmojiTable extends LitElement {
       width: 100%;
     }
     .emoji-button {
-      font-size: 60px;
-      width: 80px;
-      height: 80px;
+      font-size: 48px;
+      width: 60px;
+      height: 60px;
       border: 1px solid #333;
       background-color: #2c2c2c;
       color: white;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 8px;
+      margin: 4px;
     }
     .emoji-button:hover {
       background-color: #3a3a3a;
