@@ -118,6 +118,7 @@ export enum QuickActionMode {
   DonateMoney,
   Target,
   SendEmoji,
+  SendChat,
   BuildAtomBomb,
   BuildMIRV,
   BuildHydrogenBomb,
@@ -158,6 +159,7 @@ export class InputHandler {
     ["KeyT", QuickActionMode.DonateTroops],
     ["KeyO", QuickActionMode.Target],
     ["KeyE", QuickActionMode.SendEmoji],
+    ["Slash", QuickActionMode.SendChat],
     ["KeyA", QuickActionMode.BuildAtomBomb],
     ["KeyV", QuickActionMode.BuildMIRV],
     ["KeyH", QuickActionMode.BuildHydrogenBomb],
@@ -198,32 +200,39 @@ export class InputHandler {
     });
     window.addEventListener("keydown", (e) => {
       if (e.code === "Backquote") {
+        e.preventDefault();
         if (!this.alternateView) {
           this.alternateView = true;
           this.eventBus.emit(new AlternateViewEvent(true));
         }
       }
       if (e.code === "Escape") {
+        e.preventDefault();
         this.eventBus.emit(new CloseViewEvent());
       }
       let deltaX = 0;
       let deltaY = 0;
       if (e.code === "ArrowUp") {
         deltaY += 1;
+        e.preventDefault();
       }
       if (e.code === "ArrowDown") {
         deltaY -= 1;
+        e.preventDefault();
       }
       if (e.code === "ArrowLeft") {
         deltaX += 1;
+        e.preventDefault();
       }
       if (e.code === "ArrowRight") {
         deltaX -= 1;
+        e.preventDefault();
       }
       if (deltaX || deltaY) {
         this.eventBus.emit(new PreciseDragEvent(deltaX, deltaY));
       }
       if (/^Digit[0-9]$/.test(e.code)) {
+        e.preventDefault();
         const num = parseInt(e.code.replace("Digit", ""));
         const value = num === 0 ? 1.0 : num / 10;
         this.eventBus.emit(
@@ -231,6 +240,7 @@ export class InputHandler {
         );
       }
       if (this.keyToActionModeMap.has(e.code)) {
+        e.preventDefault();
         const newMode = this.keyToActionModeMap.get(e.code)!;
         if (this.quickActionMode !== newMode) {
           this.quickActionMode = newMode;

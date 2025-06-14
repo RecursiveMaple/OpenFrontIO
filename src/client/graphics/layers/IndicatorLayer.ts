@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import allianceIcon from "../../../../resources/images/AllianceIconWhite.svg";
 import warshipIcon from "../../../../resources/images/BattleshipIconWhite.svg";
 import boatIcon from "../../../../resources/images/BoatIconWhite.svg";
+import chatIcon from "../../../../resources/images/ChatIconWhite.svg";
 import cityIcon from "../../../../resources/images/CityIconWhite.svg";
 import donateGoldIcon from "../../../../resources/images/DonateGoldIconWhite.svg";
 import donateTroopIcon from "../../../../resources/images/DonateTroopIconWhite.svg";
@@ -39,6 +40,7 @@ import {
 } from "../../Transport";
 import { TransformHandler } from "../TransformHandler";
 import { UIState } from "../UIState";
+import { ChatModal } from "./ChatModal";
 import { EmojiTable } from "./EmojiTable";
 import { Layer } from "./Layer";
 
@@ -62,6 +64,7 @@ export class IndicatorLayer implements Layer {
     [QuickActionMode.DonateMoney, donateGoldIcon],
     [QuickActionMode.Target, targetIcon],
     [QuickActionMode.SendEmoji, emojiIcon],
+    [QuickActionMode.SendChat, chatIcon],
     [QuickActionMode.BuildCity, cityIcon],
     [QuickActionMode.BuildDefensePost, shieldIcon],
     [QuickActionMode.BuildMissileSilo, missileSiloIcon],
@@ -99,11 +102,13 @@ export class IndicatorLayer implements Layer {
 
   private boatAttackSource: TileRef | null = null;
 
+  private emojiTable: EmojiTable;
+  private chatModal: ChatModal;
+
   constructor(
     private eventBus: EventBus,
     private g: GameView,
     private transformHandler: TransformHandler,
-    private emojiTable: EmojiTable,
     private uiState: UIState,
   ) {}
 
@@ -112,6 +117,9 @@ export class IndicatorLayer implements Layer {
     this.eventBus.on(MouseMoveEvent, (e) => this.onMouseMove(e));
     this.eventBus.on(QAMouseUpEvent, (e) => this.onQAMouseUp(e));
     this.eventBus.on(QAMouse2UpEvent, (e) => this.onQAMouse2Up(e));
+
+    this.emojiTable = document.querySelector("emoji-table") as EmojiTable;
+    this.chatModal = document.querySelector("chat-modal") as ChatModal;
 
     this.createIndicatorElement();
   }
@@ -306,6 +314,7 @@ export class IndicatorLayer implements Layer {
     }
 
     const tile: TileRef = this.g.ref(cell.x, cell.y);
+    let tilePlayer = this.g.owner(tile);
     const myPlayer = this.g.myPlayer();
 
     if (myPlayer === null) {
@@ -335,7 +344,7 @@ export class IndicatorLayer implements Layer {
           ) {
             active = true;
           }
-          if (this.g.owner(tile) === myPlayer && this.g.isShore(tile)) {
+          if (tilePlayer === myPlayer && this.g.isShore(tile)) {
             this.validShore = tile;
           } else {
             this.validShore = null;
@@ -373,7 +382,6 @@ export class IndicatorLayer implements Layer {
           break;
 
         case QuickActionMode.SendEmoji:
-          let tilePlayer = this.g.owner(tile);
           if (tilePlayer.isPlayer()) {
             tilePlayer = tilePlayer as PlayerView;
             const canSendEmoji =
@@ -383,6 +391,12 @@ export class IndicatorLayer implements Layer {
             if (canSendEmoji) {
               active = true;
             }
+          }
+          break;
+
+        case QuickActionMode.SendChat:
+          if (tilePlayer.isPlayer()) {
+            active = true;
           }
           break;
 
@@ -559,6 +573,10 @@ export class IndicatorLayer implements Layer {
           }
           this.emojiTable.hideTable();
         });
+        break;
+
+      case QuickActionMode.SendChat:
+        this.chatModal.open(myPlayer, other);
         break;
 
       case QuickActionMode.BuildCity:
