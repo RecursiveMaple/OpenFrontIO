@@ -12,6 +12,7 @@ import { ChatModal } from "./layers/ChatModal";
 import { ControlPanel } from "./layers/ControlPanel";
 import { EmojiTable } from "./layers/EmojiTable";
 import { EventsDisplay } from "./layers/EventsDisplay";
+import { FlatChatModal } from "./layers/FlatChatModal";
 import { FxLayer } from "./layers/FxLayer";
 import { IndicatorLayer } from "./layers/IndicatorLayer";
 import { Layer } from "./layers/Layer";
@@ -155,6 +156,15 @@ export function createRenderer(
   }
   chatModal.g = game;
   chatModal.eventBus = eventBus;
+
+  const flatChatModal = document.querySelector(
+    "flat-chat-modal",
+  ) as FlatChatModal;
+  if (!(flatChatModal instanceof FlatChatModal)) {
+    console.error("flat chat modal not found");
+  }
+  flatChatModal.g = game;
+  flatChatModal.eventBus = eventBus;
 
   const multiTabModal = document.querySelector(
     "multi-tab-modal",

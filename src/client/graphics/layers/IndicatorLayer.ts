@@ -17,7 +17,12 @@ import shieldIcon from "../../../../resources/images/ShieldIconWhite.svg";
 import targetIcon from "../../../../resources/images/TargetIconWhite.svg";
 import traitorIcon from "../../../../resources/images/TraitorIconWhite.svg";
 import { EventBus } from "../../../core/EventBus";
-import { AllPlayers, Cell, UnitType } from "../../../core/game/Game";
+import {
+  AllPlayers,
+  Cell,
+  PlayerType,
+  UnitType,
+} from "../../../core/game/Game";
 import { TileRef } from "../../../core/game/GameMap";
 import { GameView, PlayerView } from "../../../core/game/GameView";
 import { flattenedEmojiTable } from "../../../core/Util";
@@ -40,8 +45,8 @@ import {
 } from "../../Transport";
 import { TransformHandler } from "../TransformHandler";
 import { UIState } from "../UIState";
-import { ChatModal } from "./ChatModal";
 import { EmojiTable } from "./EmojiTable";
+import { FlatChatModal } from "./FlatChatModal";
 import { Layer } from "./Layer";
 
 export class IndicatorLayer implements Layer {
@@ -101,9 +106,10 @@ export class IndicatorLayer implements Layer {
   private validShore: TileRef | null = null;
 
   private boatAttackSource: TileRef | null = null;
+  private chatP1: PlayerView | null = null;
 
   private emojiTable: EmojiTable;
-  private chatModal: ChatModal;
+  private chatModal: FlatChatModal;
 
   constructor(
     private eventBus: EventBus,
@@ -119,7 +125,7 @@ export class IndicatorLayer implements Layer {
     this.eventBus.on(QAMouse2UpEvent, (e) => this.onQAMouse2Up(e));
 
     this.emojiTable = document.querySelector("emoji-table") as EmojiTable;
-    this.chatModal = document.querySelector("chat-modal") as ChatModal;
+    this.chatModal = document.querySelector("flat-chat-modal") as FlatChatModal;
 
     this.createIndicatorElement();
   }
@@ -208,6 +214,18 @@ export class IndicatorLayer implements Layer {
           .style("border", `4px solid ${border}`)
           .style("display", "flex");
         if (this.boatAttackSource !== null) {
+          this.borderElement.style("background-color", "rgb(255, 230, 0)");
+        } else {
+          this.borderElement.style("background-color", "transparent");
+        }
+        break;
+      case QuickActionMode.SendChat:
+        this.borderElement
+          .style("left", `${x - this.iconSize / 2 - 4}px`)
+          .style("top", `${y - this.iconSize / 2 - 4}px`)
+          .style("border", `4px solid ${color}`)
+          .style("display", "flex");
+        if (this.chatP1 !== null) {
           this.borderElement.style("background-color", "rgb(255, 230, 0)");
         } else {
           this.borderElement.style("background-color", "transparent");
@@ -329,6 +347,7 @@ export class IndicatorLayer implements Layer {
       const icon: string | null =
         this.actionIconMap.get(this.quickActionMode!) || null;
       let active: boolean = false;
+      let border: string | null = null;
 
       if (icon === null) {
         return;
@@ -346,8 +365,10 @@ export class IndicatorLayer implements Layer {
           }
           if (tilePlayer === myPlayer && this.g.isShore(tile)) {
             this.validShore = tile;
+            border = "#53ac75";
           } else {
             this.validShore = null;
+            border = "#c74848";
           }
           break;
 
@@ -395,8 +416,9 @@ export class IndicatorLayer implements Layer {
           break;
 
         case QuickActionMode.SendChat:
-          if (tilePlayer.isPlayer()) {
+          if (tilePlayer.isPlayer() && tilePlayer.type() !== PlayerType.Bot) {
             active = true;
+            border = "#53ac75";
           }
           break;
 
@@ -430,18 +452,7 @@ export class IndicatorLayer implements Layer {
           mode: this.quickActionMode,
         };
       }
-      this.showIndicator(
-        x,
-        y,
-        icon,
-        active ? "#53ac75" : "#c74848",
-        this.quickActionMode === QuickActionMode.BoatAttack ||
-          this.quickActionMode === QuickActionMode.BoatAttackOneTroop
-          ? this.validShore === null
-            ? "#c74848"
-            : "#53ac75"
-          : null,
-      );
+      this.showIndicator(x, y, icon, active ? "#53ac75" : "#c74848", border);
     });
   }
 
@@ -577,6 +588,9 @@ export class IndicatorLayer implements Layer {
 
       case QuickActionMode.SendChat:
         this.chatModal.open(myPlayer, other);
+        if (this.chatP1 !== null) {
+          this.chatModal.selectPlayer(this.chatP1);
+        }
         break;
 
       case QuickActionMode.BuildCity:
@@ -600,12 +614,9 @@ export class IndicatorLayer implements Layer {
 
     if (
       this.quickActionMode !== QuickActionMode.BoatAttack &&
-      this.quickActionMode !== QuickActionMode.BoatAttackOneTroop
+      this.quickActionMode !== QuickActionMode.BoatAttackOneTroop &&
+      this.quickActionMode !== QuickActionMode.SendChat
     ) {
-      return;
-    }
-
-    if (this.validShore === null) {
       return;
     }
 
@@ -618,11 +629,15 @@ export class IndicatorLayer implements Layer {
     }
 
     const tile = this.g.ref(cell.x, cell.y);
-    if (this.validShore !== tile) {
-      return;
-    }
 
-    this.boatAttackSource = tile;
+    if (this.quickActionMode === QuickActionMode.SendChat) {
+      const tilePlayer = this.g.owner(tile);
+      if (tilePlayer.isPlayer() && tilePlayer.type() !== PlayerType.Bot) {
+        this.chatP1 = tilePlayer as PlayerView;
+      }
+    } else if (this.validShore === tile) {
+      this.boatAttackSource = tile;
+    }
   }
 
   private onMouseMove(event: MouseMoveEvent) {
@@ -637,6 +652,9 @@ export class IndicatorLayer implements Layer {
       event.mode !== QuickActionMode.BoatAttackOneTroop
     ) {
       this.boatAttackSource = null;
+    }
+    if (event.mode !== QuickActionMode.SendChat) {
+      this.chatP1 = null;
     }
     if (event.mode === null) {
       this.validAction = null;
