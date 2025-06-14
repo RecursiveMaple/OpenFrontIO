@@ -269,7 +269,7 @@ export class EventsDisplay extends LitElement implements Layer {
       {
         format: (matches, type) => `No boats available (max ${matches[1]})`,
         priority: 20,
-        duration: 50,
+        duration: 20,
       },
     ],
     [
@@ -456,6 +456,8 @@ export class EventsDisplay extends LitElement implements Layer {
       createdAt: this.game.ticks(),
       highlight: true,
       type: MessageType.CHAT,
+      priority: 30,
+      duration: 80,
       unsafeDescription: false,
     });
   }
@@ -566,6 +568,8 @@ export class EventsDisplay extends LitElement implements Layer {
         highlight: true,
         createdAt: this.game.ticks(),
         focusID: update.betrayedID,
+        priority: 100000,
+        duration: 20,
         unsafeDescription: true,
       });
     } else if (betrayed === myPlayer) {
@@ -575,6 +579,8 @@ export class EventsDisplay extends LitElement implements Layer {
         highlight: true,
         createdAt: this.game.ticks(),
         focusID: update.traitorID,
+        priority: 10,
+        duration: 50,
         unsafeDescription: true,
       });
     }
@@ -600,6 +606,8 @@ export class EventsDisplay extends LitElement implements Layer {
       highlight: true,
       createdAt: this.game.ticks(),
       focusID: otherID,
+      priority: 10,
+      duration: 50,
       unsafeDescription: true,
     });
   }
@@ -617,6 +625,8 @@ export class EventsDisplay extends LitElement implements Layer {
       highlight: true,
       createdAt: this.game.ticks(),
       focusID: event.targetID,
+      priority: 20,
+      duration: 50,
       unsafeDescription: true,
     });
   }
@@ -667,6 +677,8 @@ export class EventsDisplay extends LitElement implements Layer {
         highlight: true,
         createdAt: this.game.ticks(),
         focusID: update.emoji.senderID,
+        priority: 30,
+        duration: 80,
       });
     } else if (sender === myPlayer && recipient !== AllPlayers) {
       this.addEvent({
@@ -678,6 +690,8 @@ export class EventsDisplay extends LitElement implements Layer {
         highlight: true,
         createdAt: this.game.ticks(),
         focusID: recipient.smallID(),
+        priority: 100000,
+        duration: 20,
       });
     }
   }
