@@ -1,194 +1,133 @@
-# OpenFrontIO
+# OpenFrontIO - rm-v23 Branch
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="resources/images/OpenFrontLogoDark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="resources/images/OpenFrontLogo.svg">
-    <img src="resources/images/OpenFrontLogo.svg" alt="OpenFrontIO Logo" width="300">
-  </picture>
-</p>
+## 1. Project Introduction
 
-![Prettier Check](https://github.com/openfrontio/OpenFrontIO/actions/workflows/prettier.yml/badge.svg)
-[![Crowdin](https://badges.crowdin.net/openfront-mls/localized.svg)](https://crowdin.com/project/openfront-mls)
+This is a personal fork of OpenFrontIO, derived from the [OpenFrontIO main repository](https://github.com/openfrontio/OpenFrontIO). I have implemented several enhancements to the game client based on my preferences, primarily by integrating quick operation features.
 
-OpenFront is an online real-time strategy game focused on territorial control and alliance building. Players compete to expand their territory, build structures, and form strategic alliances in various maps based on real-world geography.
+All modifications in this repository are contained within the `rm-v23` branch, and the usage method remains consistent with the original repository. The newly introduced quick operation system makes in-game actions more intuitive and efficient. You can first familiarize yourself with this quick operation system in single-player mode.
 
-This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO.
+All changes are client-only, relying on official server (openfront.io) to run online multiplayer game.
 
-# OpenFront - Licensing
+Please note that the client does not support internationalization, and newly added English text lacks multi-language capabilities.
 
-This project uses a dual-licensing approach:
+If you encounter any issues or bugs, feel free to report them in the issues section.
 
-- Code in the `server/` and `core/` directory is licensed under MIT
-- Client code (in the `client/` directory) is licensed under GPL v3
+## 2. Quick Start
 
-## 🌟 Features
+### Run from Source (For Users with Development Experience)
 
-- **Real-time Strategy Gameplay**: Expand your territory and engage in strategic battles
-- **Alliance System**: Form alliances with other players for mutual defense
-- **Multiple Maps**: Play across various geographical regions including Europe, Asia, Africa, and more
-- **Resource Management**: Balance your expansion with defensive capabilities
-- **Cross-platform**: Play in any modern web browser
-
-## 📋 Prerequisites
-
-- [npm](https://www.npmjs.com/) (v10.9.2 or higher)
-- A modern web browser (Chrome, Firefox, Edge, etc.)
-
-## 🚀 Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/openfrontio/OpenFrontIO.git
-   cd OpenFrontIO
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm i
-   ```
-
-## 🎮 Running the Game
-
-### Development Mode
-
-Run both the client and server in development mode with live reloading:
+For environment setup and code cloning, please refer to the quickstart tutorial in the [OpenFrontIO main repository](https://github.com/openfrontio/OpenFrontIO). After cloning, remember to switch to the `rm-v23` branch:
 
 ```bash
-npm run dev
+git checkout rm-v23
 ```
 
-This will:
-
-- Start the webpack dev server for the client
-- Launch the game server with development settings
-- Open the game in your default browser
-
-### Client Only
-
-To run just the client with hot reloading:
+The subsequent steps are identical; run the following command instead to launch the client:
 
 ```bash
 npm run start:client
 ```
 
-### Server Only
+### Beginner's Guide (For Users without Development Experience)
 
-To run just the server with development settings:
+> Note: The following guide is AI-generated
 
-```bash
-npm run start:server-dev
-```
+1. Install Required Tools:
 
-## 🛠️ Development Tools
+   - Install Node.js: Visit the [Node.js website](https://nodejs.org/) and install the latest LTS version.
+   - Install Git: Visit the [Git website](https://git-scm.com/) and install Git.
 
-- **Format code**:
+2. Get the Code:
 
-  ```bash
-  npm run format
-  ```
+   - Choose a directory where you wish to store the game code.
+   - Right-click within that directory and select "Git Bash Here" (Windows) or open your terminal (Mac/Linux).
+   - Execute the following commands:
 
-- **Lint code**:
+   ```bash
+   git clone https://github.com/RecursiveMaple/OpenFrontIO.git
+   cd OpenFrontIO
+   git checkout rm-v23
+   ```
 
-  ```bash
-  npm run lint
-  ```
+3. Install Dependencies:
 
-- **Lint and fix code**:
-  ```bash
-  npm run lint:fix
-  ```
+   ```bash
+   npm i
+   ```
 
-## 🏗️ Project Structure
+4. Start the Game:
 
-- `/src/client` - Frontend game client
-- `/src/core` - Shared game logic
-- `/src/server` - Backend game server
-- `/resources` - Static assets (images, maps, etc.)
+   ```bash
+   npm run start:client
+   ```
 
-## 📝 License
+The game will automatically open in your default browser.
 
-This project is licensed under the terms found in the [LICENSE](LICENSE) file.
+## 3. Hotkey Bindings
 
-## 🤝 Contributing
+### Changes to Hotkeys
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+The `rm-v23` branch introduces the following adjustments to the original hotkey system:
 
-1. Request to join the development [Discord](https://discord.gg/K9zernJB5z).
-1. Fork the repository
-1. Create your feature branch (`git checkout -b amazing-feature`)
-1. Commit your changes (`git commit -m 'Add some amazing feature'`)
-1. Push to the branch (`git push origin amazing-feature`)
-1. Open a Pull Request
+**Removed Hotkeys:**
 
-## 🌐 Translation
+- Continuous WASD/Arrow key movement → Changed to one tile movement per arrow key press.
+- Spacebar toggle view → Changed to the backtick key (`).
+- C key view focus → Removed.
+- QE zoom → Removed.
+- Plus/minus zoom → Removed.
+- Number keys 1/2 attack ratio adjustment → Changed to number keys [0-9] to directly set ratio from 10% to 100%; Shift+[0-9] to set from 1% to 10%.
 
-Translators are welcome! Please feel free to help translate into your language.
-How to help?
+**Retained Hotkeys:**
 
-1. Request to join the translation [Discord](https://discord.gg/rUukAnz4Ww)
-1. Go to the project's Crowdin translation page: [https://crowdin.com/project/openfront-mls](https://crowdin.com/project/openfront-mls)
-1. Login if you already have an account/ Sign up if you don't have one
-1. Select the language you want to translate in/ If your language isn't on the list, click the "Request New Language" button and enter the language you want added there.
-1. Translate the strings
+- Escape - Close view.
+- Alt+R - Refresh graphics.
+- Ctrl+Left Click - Open build menu.
+- Alt+Left Click - Open emoji menu.
 
-### Project Governance
+### New Quick Operations
 
-- The project maintainer ([evan](https://github.com/evanpelle)) has final authority on all code changes and design decisions
-- All pull requests require maintainer approval before merging
-- The maintainer reserves the right to reject contributions that don't align with the project's vision or quality standards
+Usage:
 
-### Contribution Path for New Contributors
+1. Hold the corresponding key to enter operation mode.
+2. Left-click to execute the operation at the current position; multiple consecutive clicks are supported.
+3. Some operations (e.g., ship attacks, chat) allow for optional right-click pre-selection of additional objects.
 
-To ensure code quality and project stability, we use a progressive contribution system:
+An icon indicating the current operation will appear at the mouse cursor position; red signifies that the operation is not executable, while green indicates it is executable. Current hotkeys cannot be re-bound within settings, but you can attempt to modify them directly in the code. Here are all available quick operations:
 
-1. **New Contributors**: Limited to UI improvements and small bug fixes only
+- [B]oat Attack (B key) - Initiates a ship attack. (Right-click to select the ship's departure point; the outer circle ring turns green when a coastal tile can be selected as a departure point, and a successful right-click selection adds a yellow background indicator. The game usually auto-calculates the optimal departure point.)
+- Single Troop Ship Attack (Spacebar) - Same as above, but dispatches only 1 Troop (can be used for harassment, though not strategically important).
+- Send Alliance Request (= key) - Sends an alliance request to another player.
+- Break Alliance (- key) - Terminates an alliance relationship.
+- Donate [T]roops (T key) - Donates the current ratio of troops to an ally (unavailable in FFA mode).
+- Donate [M]oney (M key) - Donates 33% of gold to an ally (donation ratio cannot be selected, and unavailable in FFA mode).
+- Build [C]ity (C key) - Builds a City.
+- Build [D]efense Post (D key) - Builds a Defense Post, displays its defense range.
+- Build [S]ilo (S key) - Builds a Missile Silo.
+- Build [L]auncher (L key) - Builds a SAM Launcher, displays its outer search range and inner MIRV protection range.
+- Build [P]ort (P key) - Builds a Port.
+- Build [W]arship (W key) - Builds a Warship.
+- Build [A]tom Bomb (A key) - Builds an Atom Bomb, displays its inner and outer explosion ranges.
+- Build MI[R]V (V key) - Builds an MIRV, displays its attack range and warhead separation points (green circles).
+- Build [H]ydrogen Bomb (H key) - Builds a Hydrogen Bomb, displays its inner and outer explosion ranges.
+- Target (O key) - Marks a target player.
+- Send [E]moji (E key) - Clicks a target player to open the Emoji interface and send an emoji.
+- Send Chat (/ key) - Left-clicks a chat target to open the chat interface (can pre-select [P1] player with a right-click; a successful P1 select adds a yellow background indicator); clicks a message to send directly.
 
-   - This helps you become familiar with the codebase
-   - UI changes are easier to review and less likely to break core functionality
-   - Small, focused PRs have a higher chance of being accepted
+## 4. Other Changes
 
-2. **Established Contributors**: After several successful PRs and demonstrating understanding of the codebase, you may work on more complex features
+- **Ad Removal** - Advertisements have been removed.
 
-3. **Core Contributors**: Only those with extensive experience with the project may modify critical game systems
+- **Events Panel Improvements** - The event display method has been adjusted, now utilizing images combined with text to present events, while also fine-tuning durations and priorities for different events. The font size has been reduced.
 
-### How to Contribute Successfully
+- **Leaderboard Enhancements** - Added ΔG, Cities, and Ports rankings. ΔG represents a player's recent gold growth rate (money-making ability). Click the header to sort in descending order. The font size has been reduced.
 
-1. **Before Starting Work**:
+- **Population Control Panel Optimization** - Added "population to population cap ratio" after current population; Added "attack troops to population cap ratio" after attack ratio; The attack ratio background red bar now indicates the position of fastest population growth. In the current version, population grows fastest at around 42% of the population cap; the red bar shows what attack ratio will bring the population to 42% (this has been found to be difficult to use as a strategic guide, intended for reference only). The font size has been reduced.
 
-   - Open an issue describing what you want to contribute
-   - Wait for maintainer feedback before investing significant time
-   - Small improvements can proceed directly to PR stage
+- **Emoji Table Adjustment** - The table size has been reduced to fit completely on my 1080p display without scrollbars.
 
-2. **Code Quality Requirements**:
+- **Chat Interface Improvements** - The interface size has been reduced. The design has been flattened, removing the multi-level menu structure. Only "help," "attack," and "defend" columns have been retained. The send button has been removed; messages are sent directly by clicking them.
 
-   - All code must be well-commented and follow existing style patterns
-   - New features should not break existing functionality
-   - Code should be thoroughly tested before submission
-   - All code changes in src/core _MUST_ be tested.
+- **Territory Display Enhancement** - In-game, when territory drops below 100 tiles, attacks trigger a rapid capture mechanism. Yellow grids of different densities have been added to the territory layer, and player territory is highlighted when dropping below 800, 400, and 200 thresholds.
 
-3. **Pull Request Process**:
-
-   - Keep PRs focused on a single feature or bug fix
-   - Include screenshots for UI changes
-   - Describe what testing you've performed
-   - Be responsive to feedback and requested changes
-
-4. **Testing Requirements**:
-   - Verify your changes work as expected
-   - Test on multiple systems/browsers if applicable
-   - Document your testing process in the PR
-
-### Communication
-
-- Be respectful and constructive in all project interactions
-- Questions are welcome, but please search existing issues first
-- For major changes, discuss in an issue before starting work
-
-### Final Notes
-
-Remember that maintaining this project requires significant effort. The maintainer appreciates your contributions but must prioritize long-term project health and stability. Not all contributions will be accepted, and that's okay.
-
-Thank you for helping make OpenFront better!
+- **Others** - Other changes I may have forgotten.
