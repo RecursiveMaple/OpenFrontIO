@@ -183,7 +183,7 @@ export class FlatChatModal extends LitElement {
     if (!this.selectedPhraseData) return;
 
     if (this.selectedPhraseData.requiresPlayer && !this.selectedPlayer) {
-      return; // 等待用户选择玩家
+      return;
     }
 
     this.sendChatMessage();
