@@ -1,6 +1,6 @@
-# OpenFrontIO - rm-v23 Branch
+# OpenFrontIO - RM's Custom Client
 
-## 1. Project Introduction
+## 1. Introduction
 
 This is a personal fork of OpenFrontIO, derived from the [OpenFrontIO main repository](https://github.com/openfrontio/OpenFrontIO). I have implemented several enhancements to the game client based on my preferences, primarily by integrating quick operation features.
 
@@ -14,7 +14,7 @@ If you encounter any issues or bugs, feel free to report them in the issues sect
 
 ## 2. Quick Start
 
-### Run from Source (For Users with Development Experience)
+### For Users with Development Experience
 
 For environment setup and code cloning, please refer to the quickstart tutorial in the [OpenFrontIO main repository](https://github.com/openfrontio/OpenFrontIO). After cloning, remember to switch to the `rm-v23` branch:
 
@@ -28,7 +28,7 @@ The subsequent steps are identical; run the following command instead to launch 
 npm run start:client
 ```
 
-### Beginner's Guide (For Users without Development Experience)
+### For Users without Development Experience
 
 > Note: The following guide is AI-generated
 
@@ -131,3 +131,15 @@ An icon indicating the current operation will appear at the mouse cursor positio
 - **Territory Display Enhancement** - In-game, when territory drops below 100 tiles, attacks trigger a rapid capture mechanism. Yellow grids of different densities have been added to the territory layer, and player territory is highlighted when dropping below 800, 400, and 200 thresholds.
 
 - **Others** - Other changes I may have forgotten.
+
+## 5. Screenshots
+
+![Boat Attack](resources/images/screenshots/boatAttack.png)
+![Defense Post](resources/images/screenshots/defensePost.png)
+![SAM Launcher](resources/images/screenshots/SAMLauncher.png)
+![Hydrogen Bomb](resources/images/screenshots/hydrogenBomb.png)
+![Atom Bomb](resources/images/screenshots/atomBomb.png)
+![Population Panel](resources/images/screenshots/controlPanel.png)
+![Events Display](resources/images/screenshots/eventDisplay.png)
+![Leaderboard](resources/images/screenshots/leaderBoard.png)
+![Chat Modal](resources/images/screenshots/chatModal.png)
