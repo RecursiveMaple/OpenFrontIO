@@ -12,7 +12,6 @@ import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import { GameStartingModal } from "./GameStartingModal";
 import "./GoogleAdElement";
-import GoogleAdElement from "./GoogleAdElement";
 import { HelpModal } from "./HelpModal";
 import { HostLobbyModal as HostPrivateLobbyModal } from "./HostLobbyModal";
 import { JoinPrivateLobbyModal } from "./JoinPrivateLobbyModal";
@@ -35,6 +34,26 @@ import "./components/baseComponents/Modal";
 import { discordLogin, getUserMe, isLoggedIn, logOut } from "./jwt";
 import "./styles.css";
 
+declare global {
+  interface Window {
+    PageOS: {
+      session: {
+        newPageView: () => void;
+      };
+    };
+    ramp: {
+      que: Array<() => void>;
+      passiveMode: boolean;
+      spaAddAds: (ads: Array<{ type: string; selectorId: string }>) => void;
+      destroyUnits: (adType: string) => void;
+      settings?: {
+        slots?: any;
+      };
+      spaNewPage: (url: string) => void;
+    };
+  }
+}
+
 export interface JoinLobbyEvent {
   clientID: string;
   // Multiplayer games only have gameID, gameConfig is not known until game starts.
@@ -54,7 +73,6 @@ class Client {
 
   private joinModal: JoinPrivateLobbyModal;
   private publicLobby: PublicLobby;
-  private googleAds: NodeListOf<GoogleAdElement>;
   private userSettings: UserSettings = new UserSettings();
 
   constructor() {}
@@ -117,9 +135,6 @@ class Client {
     }
 
     this.publicLobby = document.querySelector("public-lobby") as PublicLobby;
-    this.googleAds = document.querySelectorAll(
-      "google-ad",
-    ) as NodeListOf<GoogleAdElement>;
 
     window.addEventListener("beforeunload", () => {
       consolex.log("Browser is closing");
@@ -325,6 +340,13 @@ class Client {
       () => {
         this.joinModal.close();
         this.publicLobby.stop();
+
+        try {
+          window.PageOS.session.newPageView();
+        } catch (e) {
+          console.error("Error calling newPageView", e);
+        }
+
         document.querySelectorAll(".ad").forEach((ad) => {
           (ad as HTMLElement).style.display = "none";
         });
