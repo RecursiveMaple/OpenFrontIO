@@ -11,7 +11,6 @@ import { DarkModeButton } from "./DarkModeButton";
 import "./FlagInput";
 import { FlagInput } from "./FlagInput";
 import { GameStartingModal } from "./GameStartingModal";
-import "./GoogleAdElement";
 import { HelpModal } from "./HelpModal";
 import { HostLobbyModal as HostPrivateLobbyModal } from "./HostLobbyModal";
 import { JoinPrivateLobbyModal } from "./JoinPrivateLobbyModal";
@@ -33,26 +32,6 @@ import { OButton } from "./components/baseComponents/Button";
 import "./components/baseComponents/Modal";
 import { discordLogin, getUserMe, isLoggedIn, logOut } from "./jwt";
 import "./styles.css";
-
-declare global {
-  interface Window {
-    PageOS: {
-      session: {
-        newPageView: () => void;
-      };
-    };
-    ramp: {
-      que: Array<() => void>;
-      passiveMode: boolean;
-      spaAddAds: (ads: Array<{ type: string; selectorId: string }>) => void;
-      destroyUnits: (adType: string) => void;
-      settings?: {
-        slots?: any;
-      };
-      spaNewPage: (url: string) => void;
-    };
-  }
-}
 
 export interface JoinLobbyEvent {
   clientID: string;
@@ -340,12 +319,6 @@ class Client {
       () => {
         this.joinModal.close();
         this.publicLobby.stop();
-
-        try {
-          window.PageOS.session.newPageView();
-        } catch (e) {
-          console.error("Error calling newPageView", e);
-        }
 
         document.querySelectorAll(".ad").forEach((ad) => {
           (ad as HTMLElement).style.display = "none";
