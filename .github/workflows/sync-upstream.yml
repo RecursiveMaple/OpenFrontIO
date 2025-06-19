@@ -1,0 +1,29 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/openfrontio/OpenFrontIO.git
+          git fetch upstream
+
+      - name: Sync all branches
+        run: |
+          git branch -r | grep "upstream/" | grep -v "HEAD" | sed 's/upstream\///' | while read branch; do
+            echo "Syncing $branch"
+            git checkout -B "$branch" "upstream/$branch"
+            git push origin "$branch"
+          done
