@@ -17,9 +17,6 @@ export class WinModal extends LitElement implements Layer {
   @state()
   isVisible = false;
 
-  @state()
-  showButtons = false;
-
   private _title: string;
 
   // Override to prevent shadow DOM creation
@@ -138,9 +135,7 @@ export class WinModal extends LitElement implements Layer {
       <div class="win-modal ${this.isVisible ? "visible" : ""}">
         <h2>${this._title || ""}</h2>
         ${this.innerHtml()}
-        <div
-          class="button-container ${this.showButtons ? "visible" : "hidden"}"
-        >
+        <div class="button-container">
           <button @click=${this._handleExit}>
             ${translateText("win_modal.exit")}
           </button>
