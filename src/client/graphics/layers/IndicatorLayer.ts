@@ -501,26 +501,18 @@ export class IndicatorLayer implements Layer {
       case QuickActionMode.BoatAttack:
       case QuickActionMode.BoatAttackOneTroop:
         if (this.boatAttackSource !== null) {
-          const spawnTile: Cell | null = new Cell(
-            this.g.x(this.boatAttackSource),
-            this.g.y(this.boatAttackSource),
-          );
-          this.boatAttackSource = null;
           this.eventBus.emit(
             new SendBoatAttackIntentEvent(
               other.id(),
-              validCell,
+              validTile,
               this.uiState.attackRatio * myPlayer.troops(),
-              spawnTile,
+              this.boatAttackSource,
             ),
           );
+          this.boatAttackSource = null;
           break;
         }
         myPlayer.bestTransportShipSpawn(tile).then((spawn) => {
-          let spawnTile: Cell | null = null;
-          if (spawn !== false) {
-            spawnTile = new Cell(this.g.x(spawn), this.g.y(spawn));
-          }
           const troops =
             this.quickActionMode === QuickActionMode.BoatAttack
               ? this.uiState.attackRatio * myPlayer.troops()
@@ -528,9 +520,9 @@ export class IndicatorLayer implements Layer {
           this.eventBus.emit(
             new SendBoatAttackIntentEvent(
               other.id(),
-              validCell,
+              validTile,
               troops,
-              spawnTile,
+              spawn !== false ? spawn : null,
             ),
           );
         });
