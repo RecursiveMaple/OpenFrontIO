@@ -2,7 +2,7 @@ name: Sync Upstream
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    - cron: "0 0,8,16 * * *"
   workflow_dispatch:
 
 jobs:
@@ -20,10 +20,19 @@ jobs:
           git remote add upstream https://github.com/openfrontio/OpenFrontIO.git
           git fetch upstream
 
-      - name: Sync all branches
+      - name: Sync whitelisted branches
         run: |
-          git branch -r | grep "upstream/" | grep -v "HEAD" | sed 's/upstream\///' | while read branch; do
-            echo "Syncing $branch"
-            git checkout -B "$branch" "upstream/$branch"
-            git push origin "$branch"
+          BRANCHES_TO_SYNC="
+          meta-v24
+          v22.0
+          v23
+          "
+          for branch in $BRANCHES_TO_SYNC; do
+            if git show-ref --verify --quiet refs/remotes/upstream/$branch; then
+              echo "Syncing $branch"
+              git checkout -B "$branch" "upstream/$branch"
+              git push origin "$branch" --force
+            else
+              echo "Branch $branch does not exist on upstream, skipping."
+            fi
           done
